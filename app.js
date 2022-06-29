@@ -36,48 +36,56 @@ const item3 = new Item({
 
 const defaultItems = [item1, item2, item3];
 
-let foundItems = [];
 
 app.get("/", function (req, res) {
 
-    if (foundItems.length === 0) {
-        Item.insertMany(defaultItems, function(err) {
-            if(err) {
-                console.log(err);
-            } else {
-                console.log("Inserted");
-                foundItems = defaultItems;
-            }
-        });
-        res.redirect("/");
-    } else {
-        Item.find({}, function (err, foundItems) {
+    Item.find({}, function (err, foundItems) {
+
+        if (foundItems.length === 0) {
+            Item.insertMany(defaultItems, function(err) {
+                if(err) {
+                    console.log(err);
+                } else {
+                    console.log("Inserted");
+                    foundItems = defaultItems;
+                }
+            });
+            res.redirect("/");
+        } else {
             res.render("list", {listTitle: "Today", newListItems: foundItems});
-        });
     }
 
-    
+}); 
 
 });
 
 
 app.post("/", function(req, res) {
 
-    const item = req.body.newItem;
+    const itemName = req.body.newItem;
+    const  item = new Item({
+        name: itemName
+    });
 
-    if (req.body.list === "Work List") {
-        workItems.push(item);
-        res.redirect("/work");
-    } else {
-        items.push(item) 
-        res.redirect("/");
-    }
-        
+    item.save();
+    res.redirect("/");
 });
+
+app.post("/delete", function(req, res){
+    const checkedItemId = req.body.checkbox;
+
+    Item.findByIdAndRemove(checkedItemId, function(err){
+        if (!err) {
+            console.log("Successfully deleted checked item")
+            res.redirect("/");
+        }
+
+    });
+}); 
 
 app.get("/work", function(req, res) {
     res.render("list", {listTitle: "Work List", newListItems: workItems});
-})
+});
 
 
 app.get("/about", function(req,res) {
